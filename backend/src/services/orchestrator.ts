@@ -40,7 +40,7 @@ function emitEvent(taskId: string, type: string, message: string, data?: unknown
 export async function runTask(task: Task): Promise<void> {
     const maxIterations = task.maxIterations;
     let iteration = 0;
-    let snapshot: { path: string; git: ReturnType<typeof git.createSnapshot> extends Promise<infer T> ? T : never } | null = null;
+    let snapshot: Awaited<ReturnType<typeof git.createSnapshot>> | null = null;
     let lastTestResult: TestResult | null = null;
     let lastPatches: PatchesResponse | null = null;
     const allPatches: PatchesResponse[] = [];

@@ -11,15 +11,11 @@ import cors from 'cors';
 import { WebSocketServer, WebSocket } from 'ws';
 import http from 'http';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
 import taskRoutes from './routes/tasks.js';
 import artifactRoutes from './routes/artifacts.js';
 import { orchestratorEvents } from './services/orchestrator.js';
 import type { WSMessage } from './types/index.js';
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
 
 // Initialize Express
 const app = express();
@@ -72,10 +68,12 @@ wss.on('connection', (ws: WebSocket) => {
                 // Subscribe to new task
                 subscribedTaskId = message.taskId;
 
-                if (!taskClients.has(subscribedTaskId)) {
+                if (subscribedTaskId && !taskClients.has(subscribedTaskId)) {
                     taskClients.set(subscribedTaskId, new Set());
                 }
-                taskClients.get(subscribedTaskId)!.add(ws);
+                if (subscribedTaskId) {
+                    taskClients.get(subscribedTaskId)!.add(ws);
+                }
 
                 console.log(`Client subscribed to task: ${subscribedTaskId}`);
 

@@ -28,7 +28,7 @@ function App() {
     const [tasks, setTasks] = useState<Task[]>([]);
     const [selectedTask, setSelectedTask] = useState<Task | null>(null);
     const [events, setEvents] = useState<TaskEvent[]>([]);
-    const [ws, setWs] = useState<WebSocket | null>(null);
+    const [_ws, setWs] = useState<WebSocket | null>(null);
     const [view, setView] = useState<'dashboard' | 'task'>('dashboard');
 
     // Fetch tasks on mount

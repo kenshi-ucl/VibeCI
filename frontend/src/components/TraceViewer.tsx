@@ -133,9 +133,9 @@ function TraceViewer({ events, task }: TraceViewerProps) {
                                         <span className="event-time">{formatTime(event.timestamp)}</span>
                                     </div>
                                     <p className="event-message">{event.message}</p>
-                                    {event.data && (
+                                    {event.data ? (
                                         <EventData data={event.data} type={event.type} />
-                                    )}
+                                    ) : null}
                                 </div>
                             </div>
                         ))}

@@ -1,0 +1,218 @@
+name: VibeCI CI/CD
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test-backend:
+    name: Test Backend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+      
+      - name: Install backend dependencies
+        working-directory: backend
+        run: npm ci
+      
+      - name: Build backend
+        working-directory: backend
+        run: npm run build
+      
+      - name: Lint backend
+        working-directory: backend
+        run: npm run lint || true
+
+  test-frontend:
+    name: Test Frontend
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+      
+      - name: Install frontend dependencies
+        working-directory: frontend
+        run: npm ci
+      
+      - name: Build frontend
+        working-directory: frontend
+        run: npm run build
+      
+      - name: Lint frontend
+        working-directory: frontend
+        run: npm run lint || true
+
+  test-demo-repo:
+    name: Test Demo Repository
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: demo_repo/package-lock.json
+      
+      - name: Install demo_repo dependencies
+        working-directory: demo_repo
+        run: npm ci
+      
+      - name: Run tests (expected to fail)
+        working-directory: demo_repo
+        run: npm test || echo "Tests failed as expected (signup not implemented)"
+
+  integration-test:
+    name: Integration Test
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install all dependencies
+        run: |
+          npm ci
+          cd backend && npm ci && cd ..
+          cd frontend && npm ci && cd ..
+          cd demo_repo && npm ci && cd ..
+      
+      - name: Start backend
+        working-directory: backend
+        run: |
+          npm run build
+          npm start &
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          PORT: 3001
+      
+      - name: Wait for backend
+        run: |
+          timeout 30 bash -c 'until curl -s http://localhost:3001/health; do sleep 1; done'
+      
+      - name: Test API endpoints
+        run: |
+          curl -s http://localhost:3001/health | grep -q "ok"
+          curl -s http://localhost:3001/api/tasks | grep -q "success"
+
+  e2e-test:
+    name: E2E Browser Tests
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install Playwright
+        working-directory: antigravity
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+      
+      - name: Install app dependencies
+        run: |
+          cd backend && npm ci && cd ..
+          cd frontend && npm ci && cd ..
+      
+      - name: Build and start services
+        run: |
+          cd backend && npm run build && npm start &
+          cd frontend && npm run build && npm run preview &
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      
+      - name: Wait for services
+        run: |
+          timeout 60 bash -c 'until curl -s http://localhost:3001/health; do sleep 1; done'
+          timeout 60 bash -c 'until curl -s http://localhost:4173; do sleep 1; done'
+      
+      - name: Run Playwright tests
+        working-directory: antigravity
+        run: npx playwright test
+        env:
+          BASE_URL: http://localhost:4173
+      
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: antigravity/playwright-report/
+          retention-days: 30
+
+  build-artifacts:
+    name: Build Submission Artifacts
+    runs-on: ubuntu-latest
+    needs: [test-backend, test-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      
+      - name: Install dependencies
+        run: |
+          npm ci
+          cd backend && npm ci && cd ..
+          cd frontend && npm ci && cd ..
+      
+      - name: Build all
+        run: |
+          cd backend && npm run build && cd ..
+          cd frontend && npm run build && cd ..
+      
+      - name: Create submission package
+        run: |
+          mkdir -p submission
+          cp -r backend/dist submission/backend
+          cp -r frontend/dist submission/frontend
+          cp README.md DEVPOST.md submission/
+          zip -r vibeci-submission.zip submission/
+      
+      - name: Upload submission artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vibeci-submission
+          path: vibeci-submission.zip
+          retention-days: 90

@@ -1,0 +1,52 @@
+version: '3.8'
+
+services:
+  test-runner:
+    build:
+      context: ./test_runner
+      dockerfile: Dockerfile
+    volumes:
+      - ./demo_repo:/app/repo:ro
+      - ./artifacts:/app/artifacts
+    environment:
+      - NODE_ENV=test
+    networks:
+      - vibeci-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./artifacts:/app/artifacts
+      - ./demo_repo:/app/demo_repo
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+    depends_on:
+      - test-runner
+    networks:
+      - vibeci-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:3001
+    depends_on:
+      - backend
+    networks:
+      - vibeci-network
+
+networks:
+  vibeci-network:
+    driver: bridge
+
+volumes:
+  artifacts:

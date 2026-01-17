@@ -56,6 +56,9 @@ export async function runTask(task: Task): Promise<void> {
 
         emitEvent(task.id, 'status', 'Repository snapshot created', { path: snapshot.path });
 
+        // Save workspace path to database for workspace API
+        db.updateTaskWorkspacePath(task.id, snapshot.path);
+
         // Create feature branch
         await git.createBranch(snapshot.git, `vibeci/task-${task.id.slice(0, 8)}`);
 

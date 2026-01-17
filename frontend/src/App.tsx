@@ -3,6 +3,7 @@ import TaskForm from './components/TaskForm';
 import TraceViewer from './components/TraceViewer';
 import Dashboard from './components/Dashboard';
 import ArtifactViewer from './components/ArtifactViewer';
+import WorkspaceViewer from './components/WorkspaceViewer';
 import './App.css';
 
 // Types
@@ -189,6 +190,7 @@ function App() {
                             </div>
                             <div className="task-sidebar">
                                 <ArtifactViewer taskId={selectedTask.id} />
+                                <WorkspaceViewer taskId={selectedTask.id} />
                             </div>
                         </div>
                     </div>

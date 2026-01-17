@@ -1,0 +1,200 @@
+.workspace-viewer {
+    background: var(--surface);
+    border-radius: 12px;
+    border: 1px solid var(--border);
+    margin-top: 16px;
+}
+
+.workspace-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+}
+
+.workspace-header h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--gray-100);
+}
+
+.btn-download {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-download:hover:not(:disabled) {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(139, 92, 246, 0.4);
+}
+
+.btn-download:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.workspace-info {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 16px;
+    background: var(--surface-alt);
+    font-size: 12px;
+}
+
+.folder-name {
+    color: var(--primary-light);
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.file-count {
+    color: var(--gray-400);
+}
+
+.workspace-files {
+    max-height: 300px;
+    overflow-y: auto;
+    padding: 8px 0;
+}
+
+.workspace-file {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    cursor: pointer;
+    transition: background 0.15s;
+    font-size: 13px;
+}
+
+.workspace-file:hover {
+    background: var(--surface-alt);
+}
+
+.workspace-file.selected {
+    background: rgba(139, 92, 246, 0.15);
+    border-left: 2px solid var(--primary);
+}
+
+.file-icon {
+    font-size: 14px;
+    flex-shrink: 0;
+}
+
+.file-name {
+    color: var(--gray-200);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.file-size {
+    font-size: 11px;
+    color: var(--gray-500);
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.file-children {
+    /* Children are already indented via paddingLeft in JSX */
+    display: block;
+}
+
+.workspace-empty {
+    padding: 32px 16px;
+    text-align: center;
+    color: var(--gray-500);
+}
+
+.file-preview {
+    border-top: 1px solid var(--border);
+    max-height: 300px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.file-preview .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    background: var(--surface-alt);
+    border-bottom: 1px solid var(--border);
+}
+
+.file-preview .preview-title {
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--gray-200);
+    font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.file-preview .preview-close {
+    background: none;
+    border: none;
+    color: var(--gray-400);
+    cursor: pointer;
+    padding: 4px;
+    font-size: 14px;
+    line-height: 1;
+}
+
+.file-preview .preview-close:hover {
+    color: var(--gray-200);
+}
+
+.file-preview .preview-content {
+    flex: 1;
+    overflow: auto;
+    padding: 12px;
+    background: var(--background);
+}
+
+.file-preview .preview-code {
+    margin: 0;
+    font-size: 11px;
+    font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
+    color: var(--gray-300);
+    white-space: pre-wrap;
+    word-break: break-all;
+}
+
+.file-preview .preview-loading {
+    padding: 24px;
+    text-align: center;
+    color: var(--gray-500);
+}
+
+/* Scrollbar styling */
+.workspace-files::-webkit-scrollbar,
+.file-preview .preview-content::-webkit-scrollbar {
+    width: 6px;
+}
+
+.workspace-files::-webkit-scrollbar-track,
+.file-preview .preview-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.workspace-files::-webkit-scrollbar-thumb,
+.file-preview .preview-content::-webkit-scrollbar-thumb {
+    background: var(--gray-700);
+    border-radius: 3px;
+}
+
+.workspace-files::-webkit-scrollbar-thumb:hover,
+.file-preview .preview-content::-webkit-scrollbar-thumb:hover {
+    background: var(--gray-600);
+}

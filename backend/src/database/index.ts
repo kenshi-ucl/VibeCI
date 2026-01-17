@@ -30,6 +30,7 @@ function initDatabase(): void {
       max_iterations INTEGER NOT NULL DEFAULT 3,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
+      workspace_path TEXT,
       completed_at TEXT
     );
 
@@ -114,6 +115,7 @@ export function getTask(id: string): Task | undefined {
         createdAt: row.created_at as string,
         updatedAt: row.updated_at as string,
         completedAt: row.completed_at as string | undefined,
+        workspacePath: row.workspace_path as string | undefined,
     };
 }
 
@@ -131,6 +133,7 @@ export function getAllTasks(): Task[] {
         createdAt: row.created_at as string,
         updatedAt: row.updated_at as string,
         completedAt: row.completed_at as string | undefined,
+        workspacePath: row.workspace_path as string | undefined,
     }));
 }
 
@@ -151,6 +154,14 @@ export function updateTaskStatus(id: string, status: TaskStatus, iteration?: num
     `);
         stmt.run(status, now, completedAt, id);
     }
+}
+
+export function updateTaskWorkspacePath(id: string, workspacePath: string): void {
+    const stmt = db.prepare(`
+      UPDATE tasks SET workspace_path = ?, updated_at = ?
+      WHERE id = ?
+    `);
+    stmt.run(workspacePath, new Date().toISOString(), id);
 }
 
 // Thought Signature operations

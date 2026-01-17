@@ -14,6 +14,7 @@ import path from 'path';
 
 import taskRoutes from './routes/tasks.js';
 import artifactRoutes from './routes/artifacts.js';
+import workspaceRoutes from './routes/workspace.js';
 import { orchestratorEvents } from './services/orchestrator.js';
 import type { WSMessage } from './types/index.js';
 
@@ -33,6 +34,7 @@ app.get('/health', (req, res) => {
 // API routes
 app.use('/api/tasks', taskRoutes);
 app.use('/api/artifacts', artifactRoutes);
+app.use('/api/workspace', workspaceRoutes);
 
 // Serve static artifacts
 app.use('/artifacts', express.static(path.join(process.cwd(), 'artifacts')));

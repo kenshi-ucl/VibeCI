@@ -26,8 +26,8 @@ const apiKey = process.env.GEMINI_API_KEY;
 let genAI: GoogleGenerativeAI | null = null;
 let model: GenerativeModel | null = null;
 
-// Gemini 3 Pro model name
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3-pro-preview';
+// Gemini 3 Flash - required by plan.md for agentic features
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3-flash-preview';
 
 function getModel(): GenerativeModel {
     if (!model) {
@@ -38,7 +38,7 @@ function getModel(): GenerativeModel {
         model = genAI.getGenerativeModel({
             model: GEMINI_MODEL,
             generationConfig: {
-                temperature: 0.2,
+                temperature: 1.0, // Gemini 3 recommends keeping temperature at 1.0
                 topP: 0.8,
                 topK: 40,
                 maxOutputTokens: 8192,
@@ -96,7 +96,7 @@ async function withRetry<T>(
 const systemPrompt = loadPrompt('system');
 
 /**
- * Parse JSON from AI response (handles markdown code blocks)
+ * Parse JSON from AI response (handles markdown code blocks and control characters)
  */
 function parseJsonResponse<T>(text: string): T {
     // Remove markdown code blocks if present
@@ -112,7 +112,74 @@ function parseJsonResponse<T>(text: string): T {
         jsonStr = jsonStr.slice(0, -3);
     }
 
-    return JSON.parse(jsonStr.trim()) as T;
+    jsonStr = jsonStr.trim();
+
+    // Sanitize control characters inside string values
+    // This handles cases where the AI puts actual newlines inside JSON strings
+    jsonStr = sanitizeJsonString(jsonStr);
+
+    try {
+        return JSON.parse(jsonStr) as T;
+    } catch (error) {
+        console.error('JSON parse error. Raw response:', jsonStr.slice(0, 500));
+        throw error;
+    }
+}
+
+/**
+ * Sanitize a JSON string by escaping control characters within string values
+ */
+function sanitizeJsonString(jsonStr: string): string {
+    // Replace actual newlines/tabs inside strings with escaped versions
+    // This regex finds content between quotes and escapes control chars
+    let result = '';
+    let inString = false;
+    let escaped = false;
+
+    for (let i = 0; i < jsonStr.length; i++) {
+        const char = jsonStr[i];
+
+        if (escaped) {
+            result += char;
+            escaped = false;
+            continue;
+        }
+
+        if (char === '\\') {
+            result += char;
+            escaped = true;
+            continue;
+        }
+
+        if (char === '"') {
+            inString = !inString;
+            result += char;
+            continue;
+        }
+
+        if (inString) {
+            // Escape control characters inside strings
+            const code = char.charCodeAt(0);
+            if (code < 32) {
+                if (char === '\n') {
+                    result += '\\n';
+                } else if (char === '\r') {
+                    result += '\\r';
+                } else if (char === '\t') {
+                    result += '\\t';
+                } else {
+                    // Other control chars - use unicode escape
+                    result += '\\u' + code.toString(16).padStart(4, '0');
+                }
+            } else {
+                result += char;
+            }
+        } else {
+            result += char;
+        }
+    }
+
+    return result;
 }
 
 /**

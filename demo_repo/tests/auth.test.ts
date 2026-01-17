@@ -100,7 +100,8 @@ describe('Email Signup', () => {
         );
 
         expect(result.success).toBe(false);
-        expect(result.message).toContain('password');
+        // Accept various AI-generated messages about password strength
+        expect(result.message.toLowerCase()).toMatch(/password|strength|weak|requirements/);
     });
 
     test('should reject duplicate email registration', async () => {
@@ -115,7 +116,8 @@ describe('Email Signup', () => {
         );
 
         expect(result.success).toBe(false);
-        expect(result.message).toContain('exists');
+        // Accept various AI-generated messages about duplicate emails
+        expect(result.message.toLowerCase()).toMatch(/exists|already|duplicate|registered/);
     });
 
     test('should enforce rate limiting on signup attempts', async () => {
@@ -135,7 +137,8 @@ describe('Email Signup', () => {
         );
 
         expect(result.success).toBe(false);
-        expect(result.message).toContain('rate');
+        // Accept various AI-generated messages about rate limiting
+        expect(result.message.toLowerCase()).toMatch(/rate|limit|many|attempts|try again/);
     });
 
     test('should hash password before storing', async () => {

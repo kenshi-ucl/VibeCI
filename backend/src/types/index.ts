@@ -24,6 +24,7 @@ export interface Task {
     createdAt: string;
     updatedAt: string;
     completedAt?: string;
+    workspacePath?: string;
 }
 
 // Thought Signature (reasoning checkpoint)

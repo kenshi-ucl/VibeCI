@@ -62,44 +62,80 @@ export function applyPatchToFile(repoPath: string, patch: Patch): void {
 
 /**
  * Extract new content from diff when unified diff parsing fails
- * This handles cases where the AI generates pseudo-diffs
+ * This handles cases where the AI generates pseudo-diffs or complete file replacements
  */
 function extractNewContent(diffText: string, originalContent: string): string {
     const lines = diffText.split('\n');
     const newLines: string[] = [];
-    let inDiff = false;
+    let hasAnyDiffMarkers = false;
+    let inHunk = false;
 
+    // Check if this looks like a unified diff at all
+    for (const line of lines) {
+        if (line.startsWith('@@') || line.startsWith('---') || line.startsWith('+++')) {
+            hasAnyDiffMarkers = true;
+            break;
+        }
+    }
+
+    // If no diff markers, check if it's just raw code
+    if (!hasAnyDiffMarkers) {
+        // Looks like raw replacement content - use as-is
+        const cleaned = lines.filter(l => !l.startsWith('```')).join('\n').trim();
+        if (cleaned.length > 0) {
+            return cleaned;
+        }
+        return originalContent;
+    }
+
+    // Process as a diff
     for (const line of lines) {
         // Skip diff headers
-        if (line.startsWith('---') || line.startsWith('+++') || line.startsWith('@@')) {
-            inDiff = true;
+        if (line.startsWith('---') || line.startsWith('+++')) {
             continue;
         }
 
-        if (!inDiff) continue;
+        // Track when we're in a hunk
+        if (line.startsWith('@@')) {
+            inHunk = true;
+            continue;
+        }
+
+        if (!inHunk) continue;
 
         // Handle diff lines
         if (line.startsWith('+') && !line.startsWith('+++')) {
-            // Added line
+            // Added line - include without the +
             newLines.push(line.slice(1));
         } else if (line.startsWith('-') && !line.startsWith('---')) {
-            // Removed line - skip
+            // Removed line - skip entirely
             continue;
         } else if (line.startsWith(' ')) {
-            // Context line
+            // Context line - include without the leading space
             newLines.push(line.slice(1));
+        } else if (line === '') {
+            // Empty line in diff (often represents blank lines)
+            newLines.push('');
         } else {
-            // Regular line (no prefix)
+            // Regular line without diff prefix (might be incomplete diff)
             newLines.push(line);
         }
     }
 
-    // If we couldn't extract anything, return original
+    // If we couldn't extract anything useful, return original
     if (newLines.length === 0) {
         return originalContent;
     }
 
-    return newLines.join('\n');
+    // Join and ensure proper line endings
+    let result = newLines.join('\n');
+
+    // Ensure file ends with newline if original did
+    if (originalContent.endsWith('\n') && !result.endsWith('\n')) {
+        result += '\n';
+    }
+
+    return result;
 }
 
 /**

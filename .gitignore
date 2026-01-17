@@ -22,6 +22,9 @@ data/
 artifacts/
 *.log
 
+# Workspaces (generated during task execution)
+backend/workspaces/
+
 # IDE
 .idea/
 .vscode/
